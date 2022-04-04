@@ -1,0 +1,78 @@
+(* Tiago Baptista - A75328 *)
+
+module BinaryTrees
+
+  use  int.Int
+  use  list.List
+  use  list.Mem
+  use  list.SortedInt
+  use  list.Permut
+  use  list.Length
+  
+type tree 'a = Empty | Node (tree 'a) 'a (tree 'a)
+
+
+let rec function size (t: tree 'a) : int =
+match t with
+|  Empty -> 0
+|  Node l _ r -> 1 + (size l) + (size r)
+end
+
+
+(* k ocorre em t *)
+  predicate memt (t : tree int) (k : int) =
+   match t with
+     | Empty  -> False
+     | Node t1 x t2 ->
+       if k = x then True 
+                 else memt t1 k /\ memt t2 k
+   end
+
+(* todos elementos de t <= x *)    
+  predicate leq_tree (x : int) (t : tree int) =
+    match t with
+     | Empty  -> True
+     | Node t1 k t2 ->
+       if k <= x then leq_tree x t1 /\ leq_tree x t2 
+                 else False
+    end
+    
+(* x <= todos elementos de t *)    
+  predicate geq_tree (x : int) (t : tree int) =
+    match t with
+     | Empty  -> True
+     | Node t1 k t2 ->
+       if x <= k then geq_tree x t1 /\ geq_tree x t2 
+                 else False
+    end
+  
+(* t sorted inorder *)
+  predicate sortedBT (t : tree int) =
+     match t with
+     | Empty  -> True
+     | Node t1 k t2 -> 
+       if leq_tree k t1 && geq_tree k t2 then sortedBT t1 /\ sortedBT t2
+                 else False
+    end
+
+(* num de ocorrências de x em t *)  
+  function num_occ (x: 'a) (t: tree 'a) : int =
+    match t with
+     | Empty  -> 0
+     | Node t1 k t2 ->
+       if k = x then 1 + num_occ x t1 + num_occ x t2
+                 else num_occ x t1  + num_occ x t2
+    end
+
+(* inserção inorder *)
+  let rec add (t : tree int) (v : int) : tree int =
+    requires { sortedBT t }
+    ensures  { sortedBT result} 
+    ensures {num_occ v result = 1 + num_occ v t }
+    match t with
+     | Empty -> Node (Empty) v (Empty)
+     | Node t1 x t2 ->
+       if v <= x then Node (add t1 v) x t2 
+                 else Node t1 x (add t2 v)
+    end
+end
